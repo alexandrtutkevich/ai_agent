@@ -1,7 +1,25 @@
 #!/usr/bin/env php
 <?php
 
-$apiKey = 'GROQ_API_KEY';
+
+$envPath = __DIR__ . '/.env';
+
+if (!file_exists($envPath)) {
+    fwrite(STDERR, "❌ Файл .env не знайдено\n");
+    exit(1);
+}
+
+$env = parse_ini_file($envPath);
+
+if (!$env || empty($env['GROQ_API_KEY'])) {
+    fwrite(STDERR, "❌ GROQ_API_KEY не заданий у .env\n");
+    exit(1);
+}
+
+$apiKey = $env['GROQ_API_KEY'];
+$model  = $env['AI_MODEL'] ?? 'llama-3.1-8b-instant';
+
+
 if (!$apiKey) {
     fwrite(STDERR, "GROQ_API_KEY не заданий\n");
     exit(1);
@@ -32,7 +50,7 @@ $input
 PROMPT;
 
 $payload = [
-    'model' => 'llama-3.1-8b-instant',
+    'model' => $model,
     'messages' => [
         ['role' => 'user', 'content' => $prompt]
     ],

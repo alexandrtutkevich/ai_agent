@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+set -e
+
+USER_COMMAND="$*"
+
+# 1. Перевірка git
+git rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
+  echo "❌ Not a git repository"
+  exit 1
+}
+
+BASE_BRANCH="master"
+
+#if git show-ref --verify --quiet refs/heads/master; then
+#  BASE_BRANCH="master"
+#else
+#  BASE_BRANCH="main"
+#fi
+
+CURRENT_BRANCH=$(git branch --show-current)
+
+# 3. Отримуємо diff
+DIFF=$(git diff "$BASE_BRANCH...$CURRENT_BRANCH")
+
+if [[ -z "$DIFF" ]]; then
+  echo "ℹ️ No differences with $BASE_BRANCH"
+  exit 0
+fi
+
+# 4. Формуємо prompt
+PROMPT=$(cat <<EOF
+You are a senior software engineer.
+
+User request:
+$USER_COMMAND
+
+Project context:
+- Current branch: $CURRENT_BRANCH
+- Base branch: $BASE_BRANCH
+
+Task:
+Analyze the following git diff and respond accordingly.
+
+Rules:
+- Be concise
+- Focus on real issues
+- If something is good, mention it
+- If problems exist, explain why
+
+Git diff:
+$DIFF
+EOF
+)
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+"$SCRIPT_DIR/ai-phpstorm.sh" "$PROMPT"
